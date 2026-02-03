@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BOLLYCAST | Producer Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+body{
+    background:#0b0b0b;
+    color:#fff;
+}
+.navbar{ background:#000; }
+.brand-text{
+    font-size:26px;
+    font-weight:700;
+    color:#bdbdbd;
+}
+.sidebar{
+    background:#111;
+    min-height:100vh;
+    padding:30px 20px;
+}
+.sidebar a{
+    display:block;
+    color:#ccc;
+    padding:12px 0;
+    text-decoration:none;
+}
+.sidebar a:hover,
+.sidebar a.active{
+    color:#f5c518;
+}
+.app-card{
+    background:#161616;
+    border-radius:18px;
+    padding:25px;
+    margin-bottom:25px;
+}
+.btn-accept{
+    background:#1db954;
+    color:#000;
+    font-weight:600;
+}
+.btn-reject{
+    background:#ff4d4d;
+    color:#000;
+    font-weight:600;
+}
+.small-text{
+    color:#aaa;
+    font-size:14px;
+}
+.status{
+    font-weight:600;
+}
+.status.Pending{ color:#f5c518; }
+.status.Accepted{ color:#1db954; }
+.status.Rejected{ color:#ff4d4d; }
+</style>
+</head>
+
+<body>
+
+<!-- 🔐 SECURITY -->
+<script>
+if(sessionStorage.getItem("producerLoggedIn") !== "true"){
+    window.location.href = "producer-login.html";
+}
+</script>
+
+<nav class="navbar navbar-dark">
+<div class="container-fluid">
+    <span class="navbar-brand brand-text">BOLLYCAST</span>
+    <span class="small-text">Producer Dashboard</span>
+</div>
+</nav>
+
+<div class="container-fluid">
+<div class="row">
+
+<div class="col-md-3 sidebar">
+    <a href="#" class="active">
+        <i class="fa-solid fa-users"></i> Applications
+    </a>
+    <a href="producer-login.html"
+       onclick="sessionStorage.removeItem('producerLoggedIn')">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </a>
+</div>
+
+<div class="col-md-9 p-4">
+<h3 class="mb-4">Applied Candidates</h3>
+
+<div id="applicationList"></div>
+</div>
+
+</div>
+</div>
+
+<script>
+function loadApplications(){
+    const container = document.getElementById("applicationList");
+
+    let apps =
+        JSON.parse(localStorage.getItem("producerApplications")) || [];
+
+    container.innerHTML = "";
+
+    if(apps.length === 0){
+        container.innerHTML =
+        `<p class="small-text">No applications received yet.</p>`;
+        return;
+    }
+
+    apps.forEach((app, index) => {
+        container.innerHTML += `
+        <div class="app-card">
+            <h5>${app.applicantName}</h5>
+
+            <p class="small-text">
+                Applied for:
+                <strong>${app.role}</strong>
+            </p>
+
+            <div class="row mb-2">
+                <div class="col-md-4">
+                    <strong>Location:</strong> ${app.location}
+                </div>
+                <div class="col-md-4">
+                    <strong>Salary:</strong> ${app.salary}
+                </div>
+                <div class="col-md-4">
+                    <strong>Type:</strong> ${app.type}
+                </div>
+            </div>
+
+            <p class="status ${app.status}">
+                Status: ${app.status}
+            </p>
+
+            <button class="btn btn-outline-warning btn-sm mb-3">
+                <i class="fa-solid fa-play"></i> Preview Video
+            </button>
+            <br>
+
+            <button class="btn btn-accept btn-sm me-2"
+            onclick="updateStatus(${index}, 'Accepted')">
+                Accept
+            </button>
+
+            <button class="btn btn-reject btn-sm"
+            onclick="updateStatus(${index}, 'Rejected')">
+                Reject
+            </button>
+        </div>
+        `;
+    });
+}
+
+function updateStatus(index, status){
+    let apps =
+        JSON.parse(localStorage.getItem("producerApplications")) || [];
+
+    apps[index].status = status;
+    localStorage.setItem(
+        "producerApplications",
+        JSON.stringify(apps)
+    );
+
+    /* USER NOTIFICATION */
+    let notifications =
+        JSON.parse(localStorage.getItem("userNotifications")) || [];
+
+    notifications.unshift({
+        title: status === "Accepted"
+            ? "🎉 You are Selected!"
+            : "❌ Application Rejected",
+        message:
+            `Your application for ${apps[index].role} has been ${status.toLowerCase()}.`,
+        time: new Date().toLocaleString()
+    });
+
+    localStorage.setItem(
+        "userNotifications",
+        JSON.stringify(notifications)
+    );
+
+    loadApplications();
+}
+
+loadApplications();
+</script>
+
+</body>
+</html>
