@@ -7,180 +7,250 @@
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-
+<link rel="stylesheet" href="css/responsive.css">
 <style>
 body{
     background:#0b0b0b;
     color:#fff;
 }
-.navbar{ background:#000; }
-.brand-text{
-    font-size:26px;
-    font-weight:700;
-    color:#bdbdbd;
-}
+.navbar{background:#000;}
+.brand-text{font-size:26px;font-weight:700;color:#dad8d3;}
+
 .sidebar{
     background:#111;
     min-height:100vh;
-    padding:30px 20px;
+    padding:25px;
 }
 .sidebar a{
     display:block;
-    color:#ccc;
     padding:12px 0;
+    color:#ccc;
     text-decoration:none;
 }
-.sidebar a:hover,
-.sidebar a.active{
-    color:#f5c518;
-}
+.sidebar a.active,
+.sidebar a:hover{color:#f5c518;}
+
 .app-card{
     background:#161616;
     border-radius:18px;
-    padding:25px;
-    margin-bottom:25px;
+    padding:22px;
+    margin-bottom:22px;
+}
+
+.badge-approved{background:#28a745;}
+.badge-rejected{background:#dc3545;}
+.badge-processing{background:#ffc107;color:#000;}
+
+.btn-pay{
+    background:#f5c518;
+    color:#000;
+    font-weight:600;
 }
 .btn-accept{
-    background:#1db954;
+    background:#28a745;
     color:#000;
     font-weight:600;
 }
 .btn-reject{
-    background:#ff4d4d;
+    background:#dc3545;
     color:#000;
     font-weight:600;
 }
-.small-text{
-    color:#aaa;
-    font-size:14px;
+
+.small-text{color:#aaa;font-size:14px;}
+
+/* 🔍 FILTER DROPDOWN DARK */
+.form-select{
+    background-color:#0f0f0f;
+    color:#fff;
+    border:1px solid #333;
 }
-.status{
-    font-weight:600;
+
+.form-select:focus{
+    background-color:#0f0f0f;
+    color:#fff;
+    border-color:#f5c518;
+    box-shadow:none;
 }
-.status.Pending{ color:#f5c518; }
-.status.Accepted{ color:#1db954; }
-.status.Rejected{ color:#ff4d4d; }
+
+/* Dropdown arrow white */
+.form-select option{
+    background:#0f0f0f;
+    color:#fff;
+}
+
 </style>
 </head>
 
 <body>
 
-<!-- 🔐 SECURITY -->
 <script>
-if(sessionStorage.getItem("producerLoggedIn") !== "true"){
-    window.location.href = "producer-login.html";
+if(sessionStorage.getItem("producerLoggedIn")!=="true"){
+    window.location.href="producer-login.html";
 }
 </script>
 
-<nav class="navbar navbar-dark">
-<div class="container-fluid">
-    <span class="navbar-brand brand-text">BOLLYCAST</span>
-    <span class="small-text">Producer Dashboard</span>
-</div>
+<nav class="navbar navbar-dark px-4">
+<span class="navbar-brand brand-text">BOLLYCAST</span>
+<span class="small-text">Producer Panel</span>
 </nav>
 
 <div class="container-fluid">
 <div class="row">
 
+<!-- SIDEBAR -->
 <div class="col-md-3 sidebar">
-    <a href="#" class="active">
-        <i class="fa-solid fa-users"></i> Applications
-    </a>
-    <a href="producer-login.html"
-       onclick="sessionStorage.removeItem('producerLoggedIn')">
+    <a href="#" onclick="showTab('application')"><i class="fa-solid fa-users"></i> Applications</a>
+    <a href="#" onclick="showTab('accepted')"><i class="fa-solid fa-check"></i> Accepted</a>
+    <a href="#" onclick="showTab('rejected')"><i class="fa-solid fa-xmark"></i> Rejected</a>
+    <a href="index.html" onclick="sessionStorage.removeItem('producerLoggedIn')">
         <i class="fa-solid fa-right-from-bracket"></i> Logout
     </a>
 </div>
 
+<!-- MAIN -->
 <div class="col-md-9 p-4">
-<h3 class="mb-4">Applied Candidates</h3>
 
-<div id="applicationList"></div>
+<h3 class="mb-3">Applied Candidates</h3>
+
+<!-- FILTERS -->
+<div class="d-flex gap-3 mb-4">
+<select class="form-select w-auto" id="typeFilter" onchange="render()">
+    <option value="All">All Types</option>
+    <option value="Movie">Movie</option>
+    <option value="Web Series">Web Series</option>
+    <option value="Advertisement">Advertisement</option>
+</select>
+
+<select class="form-select w-auto" id="statusFilter" onchange="render()">
+    <option value="All">All Supervisor Status</option>
+    <option value="Approved">Supervisor Approved</option>
+    <option value="Rejected">Supervisor Rejected</option>
+    <option value="Processing">Under Processing</option>
+</select>
 </div>
 
+<div id="list"></div>
+
+</div>
 </div>
 </div>
 
 <script>
-function loadApplications(){
-    const container = document.getElementById("applicationList");
+let currentTab="main";
 
-    let apps =
-        JSON.parse(localStorage.getItem("producerApplications")) || [];
+let candidates=[
+{ name:"Neha Verma", role:"Actress", type:"Movie", city:"Delhi", salary:90000, supervisor:"Approved", paid:false, final:"Processing"},
+{ name:"Aman Shah", role:"Actor", type:"Web Series", city:"Mumbai", salary:120000, supervisor:"Approved", paid:true, final:"Processing"},
+{ name:"Riya Patel", role:"Model", type:"Advertisement", city:"Ahmedabad", salary:20000, supervisor:"Rejected", paid:false, final:"Processing"},
+{ name:"Kunal Mehta", role:"Actor", type:"Movie", city:"Pune", salary:70000, supervisor:"Processing", paid:false, final:"Processing"},
+{ name:"Simran Kaur", role:"Actress", type:"Web Series", city:"Chandigarh", salary:50000, supervisor:"Approved", paid:false, final:"Processing"},
+{ name:"Rahul Roy", role:"Actor", type:"Movie", city:"Kolkata", salary:60000, supervisor:"Rejected", paid:false, final:"Processing"},
+{ name:"Pooja Jain", role:"Model", type:"Advertisement", city:"Jaipur", salary:25000, supervisor:"Approved", paid:true, final:"Accepted"},
+{ name:"Vikas Malhotra", role:"Actor", type:"Web Series", city:"Delhi", salary:80000, supervisor:"Processing", paid:false, final:"Processing"},
+{ name:"Anjali Desai", role:"Actress", type:"Movie", city:"Mumbai", salary:95000, supervisor:"Approved", paid:false, final:"Processing"},
+{ name:"Mohit Singh", role:"Actor", type:"Advertisement", city:"Noida", salary:30000, supervisor:"Rejected", paid:false, final:"Rejected"},
+{ name:"Mohit Singh", role:"Actor", type:"Advertisement", city:"Noida", salary:30000, supervisor:"Rejected", paid:false, final:"Processing"}
 
-    container.innerHTML = "";
+];
 
-    if(apps.length === 0){
-        container.innerHTML =
-        `<p class="small-text">No applications received yet.</p>`;
+function showTab(tab){
+    currentTab=tab;
+    render();
+}
+
+function payCommission(i){
+    candidates[i].paid=true;
+    alert("Commission Paid to BOLLYCAST (30%)");
+    render();
+}
+
+function acceptCandidate(i){
+    if(!candidates[i].paid){
+        alert("Please pay commission first");
         return;
     }
 
-    apps.forEach((app, index) => {
-        container.innerHTML += `
+    candidates[i].final = "Accepted";
+
+    sendUserNotification(
+        "🎉 You Are Selected!",
+        `Congratulations! You have been selected for ${candidates[i].type} project.
+Salary: ₹${candidates[i].salary}`
+    );
+
+    render();
+}
+
+
+function rejectCandidate(i){
+    candidates[i].final = "Rejected";
+
+    sendUserNotification(
+        "❌ Application Rejected",
+        `Your application for ${candidates[i].type} project has been rejected by the producer.`
+    );
+
+    render();
+}
+
+
+function render(){
+    const list=document.getElementById("list");
+    list.innerHTML="";
+
+    const typeF=document.getElementById("typeFilter").value;
+    const statusF=document.getElementById("statusFilter").value;
+
+    candidates.forEach((c,i)=>{
+
+        if(currentTab==="accepted" && c.final!=="Accepted") return;
+        if(currentTab==="rejected" && c.final!=="Rejected") return;
+        if(currentTab==="main" && c.final!=="Processing") return;
+
+        if(typeF!=="All" && c.type!==typeF) return;
+        if(statusF!=="All" && c.supervisor!==statusF) return;
+
+        let badge=`badge-processing`;
+        if(c.supervisor==="Approved") badge="badge-approved";
+        if(c.supervisor==="Rejected") badge="badge-rejected";
+
+        list.innerHTML+=`
         <div class="app-card">
-            <h5>${app.applicantName}</h5>
+            <h5>${c.name}</h5>
+            <p class="small-text">${c.role} • ${c.type}</p>
+            <p class="small-text">📍 ${c.city} | 💰 ₹${c.salary}</p>
 
-            <p class="small-text">
-                Applied for:
-                <strong>${app.role}</strong>
-            </p>
+            <span class="badge ${badge} mb-2">
+                Supervisor ${c.supervisor}
+            </span>
 
-            <div class="row mb-2">
-                <div class="col-md-4">
-                    <strong>Location:</strong> ${app.location}
-                </div>
-                <div class="col-md-4">
-                    <strong>Salary:</strong> ${app.salary}
-                </div>
-                <div class="col-md-4">
-                    <strong>Type:</strong> ${app.type}
-                </div>
-            </div>
+            <br><br>
 
-            <p class="status ${app.status}">
-                Status: ${app.status}
-            </p>
-
-            <button class="btn btn-outline-warning btn-sm mb-3">
-                <i class="fa-solid fa-play"></i> Preview Video
-            </button>
-            <br>
-
-            <button class="btn btn-accept btn-sm me-2"
-            onclick="updateStatus(${index}, 'Accepted')">
-                Accept
-            </button>
-
-            <button class="btn btn-reject btn-sm"
-            onclick="updateStatus(${index}, 'Rejected')">
-                Reject
-            </button>
+            ${
+            c.supervisor==="Approved" && c.final==="Processing"
+            ? `
+            ${!c.paid ? `<button class="btn btn-pay btn-sm me-2" onclick="payCommission(${i})">Pay 30% Commission</button>`:""}
+            <button class="btn btn-accept btn-sm me-2" onclick="acceptCandidate(${i})">Accept</button>
+            <button class="btn btn-reject btn-sm" onclick="rejectCandidate(${i})">Reject</button>
+            `
+            : `<span class="small-text">No action available</span>`
+            }
         </div>
         `;
     });
 }
 
-function updateStatus(index, status){
-    let apps =
-        JSON.parse(localStorage.getItem("producerApplications")) || [];
+render();
 
-    apps[index].status = status;
-    localStorage.setItem(
-        "producerApplications",
-        JSON.stringify(apps)
-    );
 
-    /* USER NOTIFICATION */
+function sendUserNotification(title, message){
     let notifications =
         JSON.parse(localStorage.getItem("userNotifications")) || [];
 
     notifications.unshift({
-        title: status === "Accepted"
-            ? "🎉 You are Selected!"
-            : "❌ Application Rejected",
-        message:
-            `Your application for ${apps[index].role} has been ${status.toLowerCase()}.`,
+        title: title,
+        message: message,
         time: new Date().toLocaleString()
     });
 
@@ -188,11 +258,9 @@ function updateStatus(index, status){
         "userNotifications",
         JSON.stringify(notifications)
     );
-
-    loadApplications();
 }
 
-loadApplications();
+
 </script>
 
 </body>
